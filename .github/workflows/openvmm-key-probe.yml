@@ -1,0 +1,43 @@
+name: OpenVMM checkout without a key
+
+on:
+  push:
+    branches: [af/testKey]
+    paths:
+      - .github/workflows/openvmm-key-probe*.yml
+
+permissions:
+  contents: read
+
+jobs:
+  checkout:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - name: Checkout NVX
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+
+      - name: Checkout OpenVMM without an SSH key
+        uses: ./.github/actions/checkout-openvmm
+        with:
+          ssh-key: ""
+
+      - name: Verify the pinned commit
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $expected = git rev-parse :openvmm
+          if ($LASTEXITCODE -ne 0) { throw "Cannot resolve the OpenVMM pin" }
+          $actual = git -C openvmm rev-parse HEAD
+          if ($LASTEXITCODE -ne 0) { throw "Cannot read the OpenVMM checkout" }
+          if ($actual -ne $expected) {
+            throw "OpenVMM checkout does not match the pinned commit"
+          }
+          "OpenVMM checkout succeeded without an SSH key at $actual." |
+            Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append

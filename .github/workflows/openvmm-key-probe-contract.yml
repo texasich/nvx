@@ -1,0 +1,28 @@
+name: OpenVMM required-secret contract
+
+on:
+  workflow_call:
+    secrets:
+      OPENVMM_DEPLOY_KEY:
+        description: Required-secret declaration matching the existing OpenVMM workflows
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  check-empty-key:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Check that the empty secret reached the job
+        shell: bash
+        env:
+          PROBE_KEY: ${{ secrets.OPENVMM_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -n "${PROBE_KEY}" ]; then
+            echo "::error::This probe must not receive an OpenVMM key"
+            exit 1
+          fi
+          echo "The required-secret declaration accepted an empty value." >> "${GITHUB_STEP_SUMMARY}"

@@ -1,0 +1,17 @@
+name: OpenVMM empty required-secret probe
+
+on:
+  push:
+    branches: [af/testKey]
+    paths:
+      - .github/workflows/openvmm-key-probe*.yml
+
+permissions:
+  contents: read
+
+jobs:
+  # Keep this separate so a rejected required secret cannot block the checkout probe.
+  required-secret:
+    uses: ./.github/workflows/openvmm-key-probe-contract.yml
+    secrets:
+      OPENVMM_DEPLOY_KEY: ${{ '' }}
